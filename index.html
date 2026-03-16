@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>森友家｜淋浴區報價計算器</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f5f5f5; padding: 20px; display: flex; justify-content: center; }
+        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        h3 { border-left: 5px solid #2196F3; padding-left: 10px; margin-bottom: 20px; color: #333; }
+        .input-group { margin-bottom: 15px; }
+        label { font-size: 14px; color: #666; }
+        input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 14px; background: #2196F3; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 10px; }
+        .copy-btn { background: #4CAF50; margin-top: 10px; padding: 8px; font-size: 14px; width: 100%; border: none; border-radius: 4px; color: white; cursor: pointer; }
+        #result { margin-top: 25px; }
+        .card { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; overflow: hidden; background: white; }
+        .card-header { padding: 10px; color: white; font-weight: bold; display: flex; justify-content: space-between; }
+        .card-body { padding: 12px; font-size: 15px; line-height: 1.8; }
+        .detail-row { display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding: 4px 0; }
+        .total-row { display: flex; justify-content: space-between; margin-top: 10px; font-weight: bold; color: #d32f2f; font-size: 1.2em; border-top: 2px solid #eee; padding-top: 8px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h3>淋浴區工程報價計算器</h3>
+    <div class="input-group"><label>施工高度 (cm):</label><input type="number" id="h" value="240"></div>
+    <div class="input-group"><label>後牆寬度 (cm):</label><input type="number" id="w_back" value="120"></div>
+    <div class="input-group"><label>側牆深度 (cm):</label><input type="number" id="depth" value="90"></div>
+    <button onclick="calculate()">開始計算報價</button>
+    <div id="result"></div>
+</div>
+
+<script>
+function calculate() {
+    const h = parseFloat(document.getElementById('h').value) || 0;
+    const wB = parseFloat(document.getElementById('w_back').value) || 0;
+    const d = parseFloat(document.getElementById('depth').value) || 0;
+
+    // 才數計算
+    const taiBack = Math.round((wB * h) / 900);
+    const taiSide = Math.round((d * h) / 900); 
+    const taiFloor = Math.round((wB * d) / 900);
+
+    const schemes = [
+        { name: "極淨鍍晶", unit: 150, color: "#2196F3", type: "standard" },
+        { name: "晶鑽鍍膜", unit: 250, color: "#2196F3", type: "standard" },
+        { name: "極御鍍晶", unit: 300, color: "#2196F3", type: "standard" },
+        { name: "極透防爆貼膜", unit: 400, color: "#673AB7", type: "film" }
+    ];
+
+    let finalHtml = "";
+
+    schemes.forEach((s) => {
+        let costTotal = 0;
+        let detailHtml = "";
+        let msg = `【森友家 ${s.name}報價】\\n尺寸: 高${h} / 寬${wB} / 深${d}\\n`;
+
+        if (s.type === "standard") {
+            const costBack = taiBack * s.unit;
+            const costSide = taiSide * s.unit;
+            const costFloor = taiFloor * s.unit;
+            costTotal = costBack + (costSide * 2) + costFloor;
+
+            detailHtml = `
+                <div class="detail-row"><span>後牆面 (${taiBack}才)</span><span>$${costBack.toLocaleString()}</span></div>
+                <div class="detail-row"><span>左牆面 (${taiSide}才)</span><span>$${costSide.toLocaleString()}</span></div>
+                <div class="detail-row"><span>右牆面 (${taiSide}才)</span><span>$${costSide.toLocaleString()}</span></div>
+                <div class="detail-row"><span>地板面 (${taiFloor}才)</span><span>$${costFloor.toLocaleString()}</span></div>`;
+            
+            msg += `後牆: ${taiBack}才 ($${costBack.toLocaleString()})\\n`;
+            msg += `左牆: ${taiSide}才 ($${costSide.toLocaleString()})\\n`;
+            msg += `右牆: ${taiSide}才 ($${costSide.toLocaleString()})\\n`;
+            msg += `地板: ${taiFloor}才 ($${costFloor.toLocaleString()})\\n`;
+        } else {
+            // 貼膜模式：僅計算玻璃 (後+左+右)
+            const totalGlassTai = taiBack + (taiSide * 2);
+            costTotal = totalGlassTai * s.unit;
+
+            detailHtml = `
+                <div class="detail-row"><span>玻璃施工 (${totalGlassTai}才)</span><span>$${costTotal.toLocaleString()}</span></div>
+                <div class="detail-row"><span>地板面</span><span>無</span></div>`;
+            
+            msg += `施工內容: 淋浴玻璃貼膜\\n`;
+            msg += `總計才數: ${totalGlassTai}才\\n`;
+        }
+
+        msg += `方案總價: $${costTotal.toLocaleString()}元`;
+
+        finalHtml += `
+            <div class="card">
+                <div class="card-header" style="background: ${s.color};">
+                    <span>${s.name}</span><span>${s.unit}元/才</span>
+                </div>
+                <div class="card-body">
+                    ${detailHtml}
+                    <div class="total-row"><span>方案總價</span><span>$${costTotal.toLocaleString()} 元</span></div>
+                    <button class="copy-btn" onclick="copyText('${msg}')">複製詳細報價</button>
+                </div>
+            </div>`;
+    });
+
+    document.getElementById('result').innerHTML = finalHtml;
+}
+
+function copyText(text) {
+    const cleanText = text.replace(/\\n/g, '\n');
+    navigator.clipboard.writeText(cleanText).then(() => {
+        alert('報價內容已複製！');
+    });
+}
+</script>
+</body>
+</html>
