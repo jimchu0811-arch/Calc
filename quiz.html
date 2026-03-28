@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>114年植物診療師考題練習</title>
+    <style>
+        body { background: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; padding: 15px; margin: 0; touch-action: manipulation; }
+        #quiz-container { background: white; width: 100%; max-width: 450px; padding: 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .header { border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .progress { color: #888; font-size: 15px; font-weight: bold; }
+        .score-display { color: #3b82f6; font-size: 15px; font-weight: bold; }
+        .question { font-size: 18px; font-weight: bold; margin-bottom: 20px; color: #2d3436; line-height: 1.5; }
+        .options { display: flex; flex-direction: column; gap: 12px; }
+        .option { padding: 16px; border: 2px solid #f0f0f0; border-radius: 12px; cursor: pointer; transition: 0.2s; background: #fff; font-size: 16px; line-height: 1.4; color: #4b4b4b; }
+        .option:active { background: #f9f9f9; transform: scale(0.98); }
+        .correct { background: #d1fae5 !important; border-color: #10b981 !important; color: #065f46; font-weight: bold; }
+        .wrong { background: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b; }
+        .result-screen { text-align: center; display: none; padding: 30px 10px; }
+        .result-title { font-size: 24px; color: #2d3436; margin-bottom: 10px; }
+        .final-score { font-size: 48px; color: #3b82f6; font-weight: bold; margin: 20px 0; }
+        button { margin-top: 20px; width: 100%; padding: 16px; background: #3b82f6; color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); }
+        button:active { transform: translateY(2px); }
+    </style>
+</head>
+<body>
+
+<div id="quiz-container">
+    <div id="game-content">
+        <div class="header">
+            <div class="progress">進度：<span id="q-idx">1</span> / 80</div>
+            <div class="score-display">得分：<span id="current-score">0</span></div>
+        </div>
+        <div id="q-text" class="question">載入中...</div>
+        <div id="opt-container" class="options"></div>
+    </div>
+    <div id="result-content" class="result-screen">
+        <div class="result-title">測驗完成！</div>
+        <p>你的最終成績是：</p>
+        <div class="final-score" id="final-score">0</div>
+        <button onclick="location.reload()">重新挑戰</button>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        { q: "1. 下列何者不是構成植物病害發生的條件？", a: ["感病的寄主植物", "具致病性的病原菌", "植物與病原菌接觸的時間", "合適發病的環境條件"], c: 2 },
+        { q: "2. 在植物抗病反應中，何種酵素與醌（quinone）形成有關？", a: ["NADPH 氧化酶", "多酚氧化酶", "苯丙胺酸胺解酶", "色氨酸氧化酶"], c: 1 },
+        { q: "3. 「韋提佛利亞效應」是指：", a: ["培育橫式抗病減損直式", "培育直式抗病減損橫式", "抗病性消失", "抗病性累加"], c: 1 },
+        { q: "4. 病原感染至病徵出現前稱為：", a: ["初感染源期", "潛伏期", "休眠期", "傳播期"], c: 1 },
+        { q: "5. 有關 Pathogenicity 的敘述，何者正確？", a: ["造成病害的能力", "嚴重程度", "造成過程", "流行發生"], c: 0 },
+        { q: "6. 香蕉黃葉病菌中不同 f. sp. 通常：", a: ["流行地區不同", "形態不同", "感染不同寄主", "感染不同品種"], c: 2 },
+        { q: "7. 有關 PR-1 protein 的敘述，何者正確？", a: ["無抗菌活性", "蛋白酶抑制", "水楊酸途徑指標", "僅對病毒有效"], c: 2 },
+        { q: "8. 植物病理學中以 Enation 形容何種病徵？", a: ["葉片內捲", "組織向外增生", "葉柄下彎", "組織凹陷"], c: 1 },
+        { q: "9. Quantitative resistance 與何者最像？", a: ["Race-specific", "Major gene", "Horizontal", "Gene-for-gene"], c: 2 },
+        { q: "10. 有關植物與病原相互作用，何者錯誤？", a: ["某些專一性高", "皆能對所有病原抵抗", "可突破防禦", "抗病性可由一對基因主導"], c: 1 },
+        { q: "11. 植物病害進展曲線主要描述：", a: ["溫濕度變化", "土壤pH值", "農藥殘留", "病害發生速度"], c: 3 },
+        { q: "12. 植物病害的「病兆（sign）」是指：", a: ["可見的病原體", "外觀變化", "生理反應", "體內化學變化"], c: 0 },
+        { q: "13. 柯霍法則（Koch's postulates）主要是：", a: ["鑑定形態", "評估損失", "證明特定病原引起", "判斷抗藥性"], c: 2 },
+        { q: "14. 有關松樹萎凋病敘述何者正確？", a: ["大榆小蠹傳播", "可食樹中腐生真菌", "根部接觸傳播", "進入韌皮部取食"], c: 1 },
+        { q: "15. 何種最可能引起系統性病害？", a: ["胡蘿蔔黑腐病", "青蔥黑腐病", "木瓜蒂腐病", "甘藍黑腐病"], c: 3 },
+        { q: "16. 侵染構造 appressorium 主要功能：", a: ["穿透表皮", "增加光合作用", "合成毒素", "產生孢子"], c: 0 },
+        { q: "17. 下列何者不屬於子囊菌門？", a: ["Sphaerotheca", "Taphrina", "Hemileia vastatrix", "Diaporthe"], c: 2 },
+        { q: "18. 異寄主寄生（heteroecious）正確敘述：", a: ["所有擔子菌皆是", "通過兩種不同寄主完成", "冬孢子在龍柏產生", "主要為造成流行"], c: 1 },
+        { q: "19. 何屬真菌常造成採後儲藏期病害？", a: ["Alternaria", "Bipolaris", "Cercospora", "Septoria"], c: 0 },
+        { q: "20. 何種病原真菌不會形成菌核？", a: ["Botrytis cinerea", "Fusarium solani", "Macrophomina", "Verticillium dahliae"], c: 1 },
+        { q: "21. 可產生孢囊及游走孢子的真菌：", a: ["Albugo candida", "Botrytis cinerea", "Fusarium oxysporum", "Ustilago maydis"], c: 0 },
+        { q: "22. 何種病害會產生裸露的子囊？", a: ["甘藍根瘤病", "柑橘黑點病", "桃縮葉病", "玫瑰白粉病"], c: 2 },
+        { q: "23. 適合番茄晚疫病發生的氣候條件：", a: ["低溫低濕", "低溫高濕", "高溫高濕", "高溫低濕"], c: 1 },
+        { q: "24. 下列何者屬於絕對寄生菌？", a: ["疫病菌", "炭疽病菌", "蒂腐病菌", "Puccinia sorghi"], c: 3 },
+        { q: "25. 引起梨赤星病的病原菌：", a: ["Phyllosticta", "Pestalotiopsis", "Gymnosporangium", "Puccinia graminis"], c: 2 },
+        { q: "26. 可存在昆蟲體內並藉其傳播的細菌：", a: ["根癌瘤菌", "洋蔥伯克氏菌", "水稻白葉枯病菌", "柑橘黃龍病菌"], c: 3 },
+        { q: "27. 何者目前仍無法在培養基培養？", a: ["皮爾氏病", "柑橘矮化病", "水稻黃萎病", "梨葉緣焦枯"], c: 2 },
+        { q: "28. 萬代蘭細菌性花枯病緊急防治藥劑：", a: ["亞托敏", "歐索林酸", "嘉賜黴素", "福賽得"], c: 1 },
+        { q: "29. 何種植物病原細菌具有周生鞭毛？", a: ["Acidovorax", "Burkholderia", "Pectobacterium", "Ralstonia"], c: 2 },
+        { q: "30. 甘藍葉片 V 型黃褐病徵最可能是：", a: ["黑斑病", "露菌病", "軟腐病", "黑腐病"], c: 3 },
+        { q: "31. 引起植物癌腫病的病原為何？", a: ["青枯病菌", "黑腐病菌", "軟腐病菌", "根癌瘤菌"], c: 3 },
+        { q: "32. 下列何者屬於革蘭氏陽性菌？", a: ["Streptomyces scabies", "軟腐病菌", "青枯病菌", "黑腐病菌"], c: 0 },
+        { q: "33. 植物病毒的主要傳播方式不包括：", a: ["媒介昆蟲", "種子花粉", "機械傳播", "空氣傳播"], c: 3 },
+        { q: "34. 玉米致死性壞死病是由何者複合感染？", a: ["Maize chlorotic mottle", "Maize dwarf", "Maize necrotic", "Maize yellow"], c: 0 },
+        { q: "35. 何種不是由 Botryosphaeria 引起？", a: ["蓮霧黑腐", "芒果蒂腐", "番石榴莖潰瘍", "葡萄苦腐"], c: 0 },
+        { q: "36. 何種植物病毒病害會藉由種子帶毒傳播？", a: ["東亞百香果", "甜瓜壞疽斑點", "胡瓜嵌紋", "馬鈴薯Y"], c: 1 },
+        { q: "37. 根部見黑點、子囊內含單一深黑色孢子：", a: ["南瓜", "絲瓜", "苦瓜", "洋香瓜"], c: 3 },
+        { q: "38. 根瘤線蟲幾齡期開始感染植物？", a: ["一齡", "二齡", "三齡", "四齡"], c: 1 },
+        { q: "39. 為害根部組織內部最可能分離到：", a: ["根腐線蟲", "殘根線蟲", "環紋線蟲", "劍線蟲"], c: 0 },
+        { q: "40. 葡萄扇葉病毒由下列何種方式傳播？", a: ["線蟲", "真菌", "介殼蟲", "薊馬"], c: 0 },
+        { q: "41. 田間初步診斷依據不包括？", a: ["觀察病徵病兆", "觀察分布情形", "不用參考用藥紀錄", "觀察發病部位"], c: 2 },
+        { q: "42. 胡瓜黃色角斑、黑色黴狀物、冷涼環境、游走孢子：", a: ["炭疽病", "疫病", "細菌性角斑", "露菌病"], c: 3 },
+        { q: "43. 利用 PCR 檢測時，何項確保準確？", a: ["專一性引子對", "高通量探針", "通用性引子", "無模板反應"], c: 0 },
+        { q: "44. 鐮孢菌（Fusarium）感染作物常見症狀？", a: ["局部斑點", "疣狀腫瘤", "葉片嵌紋", "黃化或萎凋"], c: 3 },
+        { q: "45. 區分 Pseudomonas 及 Xanthomonas 的生化試驗？", a: ["KOH 試驗", "KB 螢光色素產生", "厭氧生長", "D1M agar 生長"], c: 1 },
+        { q: "46. ELISA 技術主要依賴什麼原理？", a: ["核酸變性", "酶促反應", "蛋白質電泳", "細胞培養"], c: 1 },
+        { q: "47. 鑑定 Phytoplasma 最廣泛使用的基因？", a: ["16S rRNA", "gyrB", "rpoB", "recA"], c: 0 },
+        { q: "48. 檸檬葉細胞壞死突起、黃暈、淡黃色菌落：", a: ["Acidovorax", "P. syringae", "柑橘潰瘍病菌", "黑腐病菌"], c: 2 },
+        { q: "49. 穀粒褐化種仁龜裂、劍葉短小葉尖白化扭曲：", a: ["白尖病", "白葉枯病", "穀枯病", "黃葉病"], c: 0 },
+        { q: "50. 無色橢圓小型孢子、厚膜孢子、具隔膜菌絲：", a: ["紋枯病", "徒長病", "番茄萎凋病", "菜豆猝倒病"], c: 2 },
+        { q: "51. 下列何者不是褐根病菌的特性？", a: ["斷生孢子", "毛狀菌絲", "PDA 產生褐色色素", "內生孢子"], c: 3 },
+        { q: "52. 系統性感染（systemic infection）特徵？", a: ["只限局部", "從感染點擴展整株", "不進入維管束", "僅斑點病徵"], c: 1 },
+        { q: "53. 青枯病菌於 TTC 培養基特徵？", a: ["紅中白邊圓形", "紅中白邊流質狀", "黃中白邊圓形", "黃中白邊流質狀"], c: 1 },
+        { q: "54. 黑球形構造、複檢見卵形無隔膜孢子、具膠質鞘：", a: ["炭疽菌", "白粉菌", "Phyllosticta", "Septoria"], c: 2 },
+        { q: "55. 利用抗體與抗原專一性反應檢測技術？", a: ["分生技術", "生物檢定", "血清學技術", "組織化學分析"], c: 2 },
+        { q: "56. 有關柑橘黃龍病敘述何者正確？", a: ["刺粉蝨傳播", "南美立枯病", "木質部導管中", "新葉呈似缺鋅狀"], c: 3 },
+        { q: "57. 使用專一性核酸片段標識為探針診斷：", a: ["PCR", "南方墨點法", "北方墨點法", "西方墨點法"], c: 1 },
+        { q: "58. 避免木瓜輪點病，網室塑膠網目數為？", a: ["8", "16", "32", "36"], c: 2 },
+        { q: "59. 水稻徒長病最主要防治時機？", a: ["稻種時期", "秧苗生長期", "分蘗期前", "分蘗盛期"], c: 0 },
+        { q: "60. 減緩甘藍根瘤病發生的正確做法？", a: ["灌注毆殺滅", "施用擬青黴菌", "種植前施熟石灰", "與芥菜輪作"], c: 2 },
+        { q: "61. 草莓黑色病斑、走莖環斑、植株萎凋死用藥？", a: ["待克利", "三元硫酸銅", "氟比拔克", "滅達樂"], c: 0 },
+        { q: "62. 防治木瓜疫病效果最佳藥劑？", a: ["貝芬替", "達滅芬", "撲克拉錳", "依普同"], c: 1 },
+        { q: "63. 依據規範，有機可用資材不包括？", a: ["銅快得寧", "三元硫酸銅", "波爾多液", "石灰硫磺合劑"], c: 0 },
+        { q: "64. 禁止輸入之植物檢疫規定項目線蟲？", a: ["小麥線蟲", "松材線蟲", "大豆胞囊線蟲", "穿孔線蟲"], c: 3 },
+        { q: "65. 弱寄生性接種使植物產生抵抗現象稱為：", a: ["化學防治", "物理防治", "交叉保護", "抗病遺傳"], c: 2 },
+        { q: "66. 水稻白葉枯病防治不適合的做法？", a: ["採用直播", "施用撲殺熱", "施用亞托敏", "避免過多氮肥"], c: 2 },
+        { q: "67. 葡萄葉片花穗多濕葉背具黴狀物用藥？", a: ["撲克拉", "安美速", "保粒黴素甲", "熱必斯"], c: 1 },
+        { q: "68. 減少百香果病毒病害的技術？", a: ["更換品種", "冬末全園更新種植", "燈照栽培", "網室栽培"], c: 1 },
+        { q: "69. 番茄水浸狀小點轉壞疽病斑、白色暈環：", a: ["亞托敏", "嘉賜銅", "鋅錳乃浦", "礦物油"], c: 1 },
+        { q: "70. 植物對病原的防禦反應不包括？", a: ["形成木栓化", "水解酵素釋放", "過敏性反應", "增加氣孔開度"], c: 3 },
+        { q: "71. 垂直抗性（vertical resistance）特性？", a: ["長期首選", "單一少數基因控制", "對多數小種具抗性", "抗性弱但穩定"], c: 1 },
+        { q: "72. 物理性病害防治方法？", a: ["噴施化學藥", "利用熱水處理", "微生物製劑", "抗病品種"], c: 1 },
+        { q: "73. 病原產生抗藥性的主要原因為何？", a: ["施肥不足", "天氣太熱", "不常施藥", "藥劑輪替不當"], c: 3 },
+        { q: "74. 配製石灰硫磺合劑比例（石灰:硫磺:水）？", a: ["1:1:10", "1:2:10", "1:3:10", "2:1:10"], c: 1 },
+        { q: "75. CHV1 應用於防治的機制？", a: ["基因轉殖", "超寄生", "基因跳躍", "親合型菌絲融合"], c: 3 },
+        { q: "76. 下列何種病害可由薊馬傳播？", a: ["番茄斑點萎凋", "胡瓜嵌紋", "東亞百香果", "南瓜捲葉"], c: 0 },
+        { q: "77. 主要經由種子有效傳播到其他地區？", a: ["西瓜果斑病", "水稻白葉枯", "柑橘潰瘍", "木瓜輪點"], c: 0 },
+        { q: "78. 播種前次氯酸鈉處理主要目的？", a: ["增發芽率", "防止種子帶菌", "增加產量", "增加抗蟲"], c: 1 },
+        { q: "79. FRAC 中 BM 類作用機制類別？", a: ["茶樹精油", "丁香油酚", "香葉醇", "植物萃取凝集素"], c: 3 },
+        { q: "80. 番茄水浸狀病斑轉黑褐、白色黴狀物用藥？", a: ["氫氧化銅", "福賽絕", "曼普胺", "待克利"], c: 2 }
+    ];
+
+    let current = 0;
+    let score = 0;
+
+    function render() {
+        const data = quizData[current];
+        document.getElementById("q-idx").innerText = current + 1;
+        document.getElementById("current-score").innerText = score.toFixed(2);
+        document.getElementById("q-text").innerText = data.q;
+        
+        const container = document.getElementById("opt-container");
+        container.innerHTML = "";
+        
+        data.a.forEach((txt, i) => {
+            const btn = document.createElement("div");
+            btn.className = "option";
+            btn.innerText = `${String.fromCharCode(65 + i)}. ${txt}`;
+            btn.onclick = () => {
+                const opts = document.querySelectorAll(".option");
+                opts.forEach(o => o.style.pointerEvents = "none");
+                
+                if(i === data.c) {
+                    btn.classList.add("correct");
+                    score += 1.25;
+                    document.getElementById("current-score").innerText = score.toFixed(2);
+                } else {
+                    btn.classList.add("wrong");
+                    opts[data.c].classList.add("correct");
+                }
+                
+                setTimeout(() => {
+                    current++;
+                    if(current < quizData.length) {
+                        render();
+                    } else {
+                        showResult();
+                    }
+                }, 1000); // 答完 1 秒後自動跳下一題
+            };
+            container.appendChild(btn);
+        });
+    }
+
+    function showResult() {
+        document.getElementById("game-content").style.display = "none";
+        document.getElementById("result-content").style.display = "block";
+        document.getElementById("final-score").innerText = score.toFixed(2) + " 分";
+    }
+
+    // 初始化第一題
+    render();
+</script>
+
+</body>
+</html>
