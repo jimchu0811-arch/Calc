@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>植物診療師考試刷題</title>
+    <style>
+        body { background: #f0f2f5; font-family: sans-serif; display: flex; justify-content: center; padding: 20px; }
+        #quiz-container { background: white; width: 100%; max-width: 500px; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .progress { color: #666; font-size: 14px; margin-bottom: 10px; }
+        .question { font-size: 18px; font-weight: bold; margin-bottom: 20px; line-height: 1.5; color: #2d3436; }
+        .options { display: flex; flex-direction: column; gap: 12px; }
+        .option { padding: 15px; border: 2px solid #dfe6e9; border-radius: 10px; cursor: pointer; transition: 0.2s; }
+        .option:hover { background: #f1f2f6; border-color: #74b9ff; }
+        .correct { background: #55efc4 !important; border-color: #00b894 !important; color: #004b3a; }
+        .wrong { background: #ff7675 !important; border-color: #d63031 !important; color: white; }
+        .score-board { text-align: center; display: none; }
+        button { margin-top: 20px; padding: 10px 20px; background: #0984e3; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="quiz-container">
+    <div id="game-box">
+        <div class="progress">題目: <span id="current-idx">1</span> / 80</div>
+        <div id="question-text" class="question">載入中...</div>
+        <div id="options-container" class="options"></div>
+    </div>
+    <div id="result-box" class="score-board">
+        <h2>測驗結束！</h2>
+        <p style="font-size: 24px;">得分: <span id="final-score">0</span> / 100</p>
+        <button onclick="location.reload()">再測一次</button>
+    </div>
+</div>
+
+<script>
+    // 從 PDF 提取的部分試題數據
+    const quizData = [
+        { q: "下列何者不是構成植物病害發生的條件？", a: ["感病的寄主植物", "具致病性的病原菌", "植物與病原菌接觸的時間", "合適發病的環境條件"], correct: 2 },
+        { q: "在植物抗病反應中，何種酵素與醌（quinone）或半對醌（semiquinone）形成有關？", a: ["NADPH 氧化酶", "多酚氧化酶", "苯丙胺酸胺解酶", "色氨酸氧化酶"], correct: 1 },
+        { q: "「韋提佛利亞效應（vertifolia effect）」是指下列何種狀況？", a: ["在培育橫式抗病性的過程中，出現了減損直式抗病性的效果", "在培育直式抗病性的過程中，出現了減損橫式抗病性的效果", "在培育抗病品種的過程中，所造成抗病性的消失", "在培育抗病品種的過程中，所造成抗病性累加的現象"], correct: 1 },
+        { q: "病原感染植物至病徵出現之前的這段時期稱為：", a: ["初感染源期", "潛伏期", "休眠期", "傳播期"], correct: 1 },
+        { q: "有關 Pathogenicity 的敘述，下列何者正確？", a: ["指病原菌造成植物病害的能力", "指病原菌造成植物病害的嚴重程度", "指病原菌造成病害的過程", "指病原菌在寄主間的傳播到流行病的發生"], correct: 0 }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    function loadQuestion() {
+        const item = quizData[currentIdx];
+        document.getElementById("current-idx").innerText = currentIdx + 1;
+        document.getElementById("question-text").innerText = item.q;
+        const container = document.getElementById("options-container");
+        container.innerHTML = "";
+        
+        item.a.forEach((text, i) => {
+            const div = document.createElement("div");
+            div.className = "option";
+            div.innerText = `${String.fromCharCode(65 + i)}. ${text}`;
+            div.onclick = () => checkAnswer(i, div);
+            container.appendChild(div);
+        });
+    }
+
+    function checkAnswer(selected, el) {
+        const correct = quizData[currentIdx].correct;
+        const allOptions = document.querySelectorAll(".option");
+        
+        // 禁用點擊
+        allOptions.forEach(opt => opt.style.pointerEvents = "none");
+
+        if (selected === correct) {
+            el.classList.add("correct");
+            score += 1.25;
+        } else {
+            el.classList.add("wrong");
+            allOptions[correct].classList.add("correct");
+        }
+
+        setTimeout(() => {
+            currentIdx++;
+            if (currentIdx < quizData.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }, 1500);
+    }
+
+    function showResult() {
+        document.getElementById("game-box").style.display = "none";
+        document.getElementById("result-box").style.display = "block";
+        document.getElementById("final-score").innerText = score.toFixed(1);
+    }
+
+    loadQuestion();
+</script>
+
+</body>
+</html>
